@@ -220,6 +220,13 @@ test {
     }
 }
 
+task unitTests(type: Test) {
+    filter {
+        // excludeCategories doesn't seem to work
+        excludeTestsMatching 'com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.integTests.*'
+    }
+}
+
 task rcaTest(type: Test) {
     dependsOn checkstyleMain
     dependsOn checkstyleTest
@@ -320,7 +327,7 @@ dependencies {
     testCompile group: 'org.objenesis', name: 'objenesis', version: '3.0.1'
     testCompile group: 'org.hamcrest', name: 'hamcrest-library', version: '2.1'
     testCompile group: 'org.hamcrest', name: 'hamcrest', version: '2.1'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.1'
 }
 
 protobuf {
