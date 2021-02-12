@@ -18,9 +18,6 @@ buildscript {
         classpath group: 'com.google.guava', name: 'guava', version: '28.2-jre'
         classpath 'org.ajoberstar:gradle-git:0.2.3'
     }
-    ext {
-        gitDefaultBranch = 'main'
-    }
 }
 
 plugins {
@@ -84,6 +81,7 @@ publishing {
 ext {
     opendistroVersion = '1.13'
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
+    gitDefaultBranch = 'main'
 }
 
 checkstyle {
