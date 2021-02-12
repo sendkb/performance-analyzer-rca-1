@@ -226,6 +226,9 @@ task unitTests(type: Test) {
     filter {
         // excludeCategories doesn't seem to work
         excludeTestsMatching 'com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.integTests.*'
+
+        // tests causing OOM errors in github
+        excludeTestsMatching 'com.amazon.opendistro.elasticsearch.performanceanalyzer.reader.OSMetricsSnapshotTests'
     }
 }
 
