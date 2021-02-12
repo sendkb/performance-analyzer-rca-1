@@ -3,13 +3,12 @@ name: Java CI
 on: 
   push: 
     branches: 
-      - main
-      - dev
-
+      - fargate-ci
   pull_request:
     branches: 
       - main
       - dev
+      - fargate-ci
 
 jobs:
   build_rca_pkg:
@@ -20,7 +19,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: ./tmp/performance-analyzer-rca
-    # fetch the main branch to make it available for spotless ratcheting
+      # fetch the main branch to make it available for spotless ratcheting
     - name: Fetch 'main' branch
       working-directory:  ./tmp/performance-analyzer-rca
       run: git fetch --depth=1 origin main
@@ -66,9 +65,9 @@ jobs:
     - name: Build PA and run Unit Tests
       working-directory: ./tmp/pa
       run: ./gradlew build -i
-    - name: Spin up Docker cluster for integ testing
-      working-directory: ./tmp/performance-analyzer-rca
-      run: ./gradlew enableRca
-    - name: Run integration tests
-      working-directory: ./tmp/pa
-      run: ./gradlew integTest --info --stacktrace -Dtests.enableIT=true
+    # - name: Spin up Docker cluster for integ testing
+    #   working-directory: ./tmp/performance-analyzer-rca
+    #   run: ./gradlew enableRca
+    # - name: Run integration tests
+    #   working-directory: ./tmp/pa
+    #   run: ./gradlew integTest --info --stacktrace -Dtests.enableIT=true

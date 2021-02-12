@@ -214,7 +214,10 @@ if (isSnapshot) {
 }
 
 test {
-    enabled = true
+    filter {
+        // excludeCategories doesn't seem to work
+        excludeTestsMatching 'com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.integTests.*'
+    }
     retry {
         maxRetries = 2
     }
