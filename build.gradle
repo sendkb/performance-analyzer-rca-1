@@ -81,7 +81,7 @@ publishing {
 ext {
     opendistroVersion = '1.13'
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
-    gitDefaultBranch = 'main'
+    gitDefaultBranch = 'fargate-ci'
 }
 
 checkstyle {
