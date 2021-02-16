@@ -61,8 +61,8 @@ jobs:
     - name: Set docker-compose path
       run: DOCKER_COMPOSE_LOCATION=$(which docker-compose)
       # Set the vm.max_map_count system property to the minimum required to run Elasticsearch
-    - name: Set vm.max_map_count
-      run: sudo sysctl -w vm.max_map_count=262144
+    # - name: Set vm.max_map_count
+    #   run: sudo sysctl -w vm.max_map_count=262144
     - name: Build PA and run Unit Tests
       working-directory: ./tmp/pa
       run: ./gradlew build -i
@@ -72,3 +72,14 @@ jobs:
     # - name: Run integration tests
     #   working-directory: ./tmp/pa
     #   run: ./gradlew integTest --info --stacktrace -Dtests.enableIT=true
+    # - name: Build Docker image
+    #   working-directory: ./tmp/performance-analyzer-rca
+    #   run: ./gradlew buildDocker
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.RCA_TESTS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.RCA_TESTS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+    - name: Log in to ECR
+      uses: aws-actions/amazon-ecr-login@v1
