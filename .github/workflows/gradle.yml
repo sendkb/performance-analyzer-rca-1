@@ -83,6 +83,7 @@ jobs:
         aws-region: us-west-2
     - name: Log in to ECR
       uses: aws-actions/amazon-ecr-login@v1
+      id: login-ecr
     - name: Copy build artifacts
       working-directory: ./tmp/performance-analyzer-rca
       run: ./gradlew copyAllArtifacts
