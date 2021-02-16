@@ -233,8 +233,6 @@ task unitTests(type: Test) {
 }
 
 task rcaTest(type: Test) {
-    dependsOn checkstyleMain
-    dependsOn checkstyleTest
     retry {
         maxRetries = 2
     }
@@ -245,8 +243,6 @@ task rcaTest(type: Test) {
 }
 
 task rcaIt(type: Test) {
-    dependsOn checkstyleMain
-    dependsOn checkstyleTest
     dependsOn spotbugsMain
     retry {
         maxRetries = 2
