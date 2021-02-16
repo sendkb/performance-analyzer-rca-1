@@ -22,7 +22,6 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'checkstyle'
     id 'application'
     id 'maven-publish'
     id 'com.google.protobuf' version '0.8.8'
@@ -82,11 +81,6 @@ ext {
     opendistroVersion = '1.13'
     isSnapshot = "true" == System.getProperty("build.snapshot", "true")
     gitDefaultBranch = 'fargate-ci'
-}
-
-checkstyle {
-    toolVersion '8.24'
-    configFile file("configs/checkstyle/checkstyle.xml")
 }
 
 apply plugin: 'com.diffplug.spotless'
