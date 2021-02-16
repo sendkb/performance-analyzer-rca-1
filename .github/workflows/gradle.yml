@@ -87,6 +87,13 @@ jobs:
     - name: Copy build artifacts
       working-directory: ./tmp/performance-analyzer-rca
       run: ./gradlew copyAllArtifacts
+    - name: Testing
+      working-directory: ./tmp/performance-analyzer-rca
+      run: |
+        ls
+        ls build
+        ls build/docker-build
+        ls build/docker-build/docker-rca
     - name: Push docker image to ECR
       working-directory: ./tmp/performance-analyzer-rca/build/docker-build/docker-rca
       env:
