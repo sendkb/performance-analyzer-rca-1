@@ -91,11 +91,14 @@ jobs:
       working-directory: ./tmp/performance-analyzer-rca
       run: |
         ls
+        echo ASDF ls build
         ls build
-        ls docker-build
-        ls docker-rca
+        echo ASDF ls build/docker-build
+        ls build/docker-build
+        echo ASDF ls build/docker-build/docker-rca
+        ls build/docker-build/docker-rca
     - name: Push docker image to ECR
-      working-directory: ./tmp/performance-analyzer-rca/docker-rca
+      working-directory: ./tmp/performance-analyzer-rca/build/docker-build/docker-rca
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: rca-tests-repository
