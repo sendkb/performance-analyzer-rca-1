@@ -96,6 +96,8 @@ jobs:
     name: Running RCA integration tests
     needs: build_rca_pkg
     steps:
+      - name: Checkout RCA package
+        uses: actions/checkout@v2
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -113,7 +115,7 @@ jobs:
           ECR_REPOSITORY: rca-tests-testrunner
           IMAGE_TAG: ${{ github.sha }}
         with:
-          task-definition: ./tmp/performance-analyzer-rca/configs/aws/task-definition.rca-it.json
+          task-definition: ./performance-analyzer-rca/configs/aws/task-definition.rca-it.json
           container-name: testrunner
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       - name: Deploy to ECS
@@ -130,7 +132,7 @@ jobs:
           CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
           echo "Current status is: $CURRENT_STATUS"
           while [ "$CURRENT_STATUS" != "STOPPED" ];
-            do sleep 10;
+            do sleep 1m;
             CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
           done;
 
