@@ -108,13 +108,12 @@ jobs:
       - name: Render task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
-        working-directory: ./tmp/performance-analyzer-rca
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: rca-tests-testrunner
           IMAGE_TAG: ${{ github.sha }}
         with:
-          task-definition: configs/aws/task-definition.rca-it.json
+          task-definition: ./tmp/performance-analyzer-rca/configs/aws/task-definition.rca-it.json
           container-name: testrunner
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       - name: Deploy to ECS
