@@ -15,12 +15,16 @@ jobs:
     runs-on: [ubuntu-latest]
     name: Building RCA package
     steps:
+    - name: Set up JDK 1.12
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.12
     - name: Checkout RCA package
       uses: actions/checkout@v2
       with:
         path: ./tmp/performance-analyzer-rca
       # fetch the main branch to make it available for spotless ratcheting
-    - name: Fetch 'main' branch
+    - name: Fetch RCA 'main' branch
       working-directory:  ./tmp/performance-analyzer-rca
       run: git fetch --depth=1 origin main
     - name: Checkout Performance Analyzer package
@@ -28,11 +32,7 @@ jobs:
       with:
         repository: opendistro-for-elasticsearch/performance-analyzer
         ref: fargate-ci
-        path: ./tmp/pa
-    - name: Set up JDK 1.12
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.12
+        path: ./tmp/performance-analyzer
     - name: Build RCA with Gradle
       working-directory:  ./tmp/performance-analyzer-rca
       run: ./gradlew build --stacktrace
@@ -53,28 +53,14 @@ jobs:
       working-directory: ./tmp/performance-analyzer-rca
       run: ./gradlew publishToMavenLocal
     - name: Build PA gradle using the new RCA jar
-      working-directory: ./tmp/pa
+      working-directory: ./tmp/performance-analyzer
       run: rm licenses/performanceanalyzer-rca-1.13.jar.sha1
     - name: Update SHA
-      working-directory: ./tmp/pa
+      working-directory: ./tmp/performance-analyzer
       run: ./gradlew updateShas
-    - name: Set docker-compose path
-      run: DOCKER_COMPOSE_LOCATION=$(which docker-compose)
-      # Set the vm.max_map_count system property to the minimum required to run Elasticsearch
-    # - name: Set vm.max_map_count
-    #   run: sudo sysctl -w vm.max_map_count=262144
     - name: Build PA and run Unit Tests
-      working-directory: ./tmp/pa
+      working-directory: ./tmp/performance-analyzer
       run: ./gradlew build -i
-    # - name: Spin up Docker cluster for integ testing
-    #   working-directory: ./tmp/performance-analyzer-rca
-    #   run: ./gradlew enableRca
-    # - name: Run integration tests
-    #   working-directory: ./tmp/pa
-    #   run: ./gradlew integTest --info --stacktrace -Dtests.enableIT=true
-    # - name: Build Docker image
-    #   working-directory: ./tmp/performance-analyzer-rca
-    #   run: ./gradlew buildDocker
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -87,22 +73,40 @@ jobs:
     - name: Copy build artifacts
       working-directory: ./tmp/performance-analyzer-rca
       run: ./gradlew copyAllArtifacts
-    - name: Testing
-      working-directory: ./tmp/performance-analyzer-rca
-      run: |
-        ls
-        echo ASDF ls build
-        ls build
-        echo ASDF ls build/docker-build
-        ls build/docker-build
-        echo ASDF ls build/docker-build/rca-docker
-        ls build/docker-build/rca-docker
-    - name: Push docker image to ECR
-      working-directory: ./tmp/performance-analyzer-rca/build/docker-build/rca-docker
+    - name: Push Elasticsearch docker image to ECR
+      working-directory: ./tmp/performance-analyzer-rca/build/elasticsearch-docker
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: rca-tests-repository
+        ECR_REPOSITORY: rca-tests-es-pa-rca
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: Push Testrunner docker image to ECR
+      working-directory: ./tmp/performance-analyzer-rca/build/testrunner-docker
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: rca-tests-testrunner
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+  rca_integration_tests:
+    runs-on: [ubuntu-latest]
+    name: Running RCA integration tests
+    needs: build_rca_package
+    steps:
+      - name: Hello World
+        run: echo Hello World
+
+
+
+    # - name: Spin up Docker cluster for integ testing
+    #   working-directory: ./tmp/performance-analyzer-rca
+    #   run: ./gradlew enableRca
+    # - name: Run integration tests
+    #   working-directory: ./tmp/pa
+    #   run: ./gradlew integTest --info --stacktrace -Dtests.enableIT=true
+    # - name: Build Docker image
+    #   working-directory: ./tmp/performance-analyzer-rca
+    #   run: ./gradlew buildDocker

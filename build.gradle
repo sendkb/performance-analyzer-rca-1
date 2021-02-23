@@ -219,13 +219,6 @@ test {
     }
 }
 
-task unitTests(type: Test) {
-    filter {
-        // excludeCategories doesn't seem to work
-        excludeTestsMatching 'com.amazon.opendistro.elasticsearch.performanceanalyzer.rca.integTests.*'
-    }
-}
-
 task rcaTest(type: Test) {
     retry {
         maxRetries = 2
@@ -351,6 +344,9 @@ idea {
 }
 
 import groovy.json.JsonSlurper
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.TaskExecutionException
+
 import java.nio.file.Paths
 import org.ajoberstar.gradle.git.tasks.GitClone
 
@@ -392,9 +388,8 @@ task regenerateLicenses(type: Exec) {
 task buildPa(type: Exec) {
     dependsOn(assemble, publishToMavenLocal, regenerateLicenses)
     workingDir paDir
-    println String.format('pa in dir: (%s) will be built.', paDir)
     commandLine './gradlew', 'assemble'
-    println "PA repo located at '" + paDir + "' will be used."
+    println "Performance Analyzer repo located at '" + paDir + "' will be used."
 }
 
 task copyAllArtifacts(type: Copy) {
@@ -425,6 +420,88 @@ task buildDocker(type: Exec) {
 
     workingDir(dockerArtifactsDir)
     commandLine 'docker', 'build', '-t', 'odfe-es/pa-rca:1.0', '.'
+}
+
+task verifyLocalPaDir {
+    if (!file("$localPaDir").exists()) {
+        throw new RuntimeException("Directory $localPaDir does not exist")
+    }
+}
+
+// Copy the artifacts required to build the Elasticsearch docker image with performance analyzer
+task copyElasticsearchDockerArtifacts(type: Copy) {
+    // depends on RCA build, PA build
+
+    from "$projectDir/dockernew/elasticsearch",
+            "$buildDir/distributions/performance-analyzer-rca.zip",
+            "$localPaDir/build/distributions/opendistro-performance-analyzer-1.13.0.0-SNAPSHOT.zip"
+
+    into "$buildDir/elasticsearch-docker"
+}
+
+task buildElasticsearchDockerImage(type: Exec) {
+    dependsOn(copyElasticsearchDockerArtifacts)
+
+    workingDir("$buildDir/elasticsearch-docker")
+    commandLine 'docker', 'build', '-t', 'odfe-es/pa-rca:1.0', '.'
+}
+
+import org.apache.tools.ant.DirectoryScanner
+
+task copyTestrunnerRcaSource(type: Copy) {
+    // We need to remove the .git directory from the list of default excludes
+    doFirst {
+        DirectoryScanner.defaultExcludes.each { DirectoryScanner.removeDefaultExclude it }
+        DirectoryScanner.addDefaultExclude 'something has to be in here or everything gets excluded'
+    }
+
+    from("$projectDir") {
+        include "src/**/*", ".git/**/*", "build.gradle", "gradle.properties"
+    }
+
+    into "$buildDir/testrunner-docker/performance-analyzer-rca"
+
+    doLast {
+        DirectoryScanner.resetDefaultExcludes()
+    }
+}
+
+task copyTestrunnerPaSource(type: Copy) {
+    dependsOn(verifyLocalPaDir, copyTestrunnerRcaSource)
+
+    // We need to remove the .git directory from the list of default excludes
+    doFirst {
+        DirectoryScanner.defaultExcludes.each { DirectoryScanner.removeDefaultExclude it }
+        DirectoryScanner.addDefaultExclude 'something has to be in here or everything gets excluded'
+    }
+
+    from("$localPaDir") {
+        include "src/**/*", ".git/**/*", "build.gradle", "gradle.properties"
+    }
+
+    into "$buildDir/testrunner-docker/performance-analyzer-rca/$localPaDir"
+
+    doLast {
+        DirectoryScanner.resetDefaultExcludes()
+    }
+}
+
+task copyTestrunnerDockerArtifacts(type: Copy) {
+    dependsOn(copyTestrunnerRcaSource, copyTestrunnerPaSource)
+
+    from "$projectDir/dockernew/testrunner"
+
+    into "$buildDir/testrunner-docker"
+}
+
+task buildTestrunnerDockerImage(type: Exec) {
+    dependsOn(copyTestrunnerDockerArtifacts)
+    workingDir("$buildDir/testrunner-docker")
+    commandLine 'docker', 'build', '-t', 'odfe-es/pa-rca-testrunner:1.0', '.'
+}
+
+task copyDockerArtifacts {
+    dependsOn(copyElasticsearchDockerArtifacts, copyTestrunnerDockerArtifacts)
 }
 
 task runDocker(type: Exec) {

@@ -5,8 +5,19 @@
   "inferenceAccelerators": [],
   "containerDefinitions": [
     {
-      "name": "ecs-devops-sandbox",
-      "image": "ecs-devops-sandbox-repository:00000",
+      "name": "elasticsearch-1",
+      "resourceRequirements": null,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": "8080",
+          "protocol": "tcp"
+        }
+
+      ]
+    },
+    {
+      "name": "elasticsearch-2",
       "resourceRequirements": null,
       "essential": true,
       "portMappings": [
@@ -22,8 +33,8 @@
   "networkMode": "awsvpc",
   "cpu": "1024",
   "memory": "4096",
-  "executionRoleArn": "arn:aws:iam::356098247920:role/ecs-devops-sandbox-execution-role",
-  "family": "ecs-devops-sandbox-task-definition",
+  "executionRoleArn": "arn:aws:iam::356098247920:role/rca-tests-execution-role",
+  "family": "rca-tests",
   "taskRoleArn": "",
   "placementConstraints": []
 }
