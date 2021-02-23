@@ -72,7 +72,7 @@ jobs:
       id: login-ecr
     - name: Copy build artifacts
       working-directory: ./tmp/performance-analyzer-rca
-      run: ./gradlew copyAllArtifacts
+      run: ./gradlew copyDockerArtifacts
     - name: Push Elasticsearch docker image to ECR
       working-directory: ./tmp/performance-analyzer-rca/build/elasticsearch-docker
       env:
