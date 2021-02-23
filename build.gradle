@@ -432,7 +432,7 @@ task verifyLocalPaDir {
 task copyElasticsearchDockerArtifacts(type: Copy) {
     // depends on RCA build, PA build
 
-    from "$projectDir/dockernew/elasticsearch",
+    from "$projectDir/docker/elasticsearch",
             "$buildDir/distributions/performance-analyzer-rca.zip",
             "$localPaDir/build/distributions/opendistro-performance-analyzer-1.13.0.0-SNAPSHOT.zip"
 
@@ -489,7 +489,7 @@ task copyTestrunnerPaSource(type: Copy) {
 task copyTestrunnerDockerArtifacts(type: Copy) {
     dependsOn(copyTestrunnerRcaSource, copyTestrunnerPaSource)
 
-    from "$projectDir/dockernew/testrunner"
+    from "$projectDir/docker/testrunner"
 
     into "$buildDir/testrunner-docker"
 }
