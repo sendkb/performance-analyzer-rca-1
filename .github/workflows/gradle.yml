@@ -96,10 +96,51 @@ jobs:
     name: Running RCA integration tests
     needs: build_rca_pkg
     steps:
-      - name: Hello World
-        run: echo Hello World
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.RCA_TESTS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.RCA_TESTS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        id: login-ecr
+      - name: Render task definition
+        id: render-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        working-directory: ./tmp/performance-analyzer-rca
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: rca-tests-testrunner
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          task-definition: configs/aws/task-definition.rca-it.json
+          container-name: testrunner
+          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Deploy to ECS
+        id: deploy-to-ecs
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+          cluster: rca-tests-cluster
+      - name: Wait for tests
+        env:
+          AWS_REGION: us-west-2
+        run: |
+          # Check the task status
+          CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
+          echo "Current status is: $CURRENT_STATUS"
+          while [ "$CURRENT_STATUS" != "STOPPED" ];
+            do sleep 10;
+            CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
+          done;
 
-
+          EXIT_CODE = $(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode')
+          if [ $EXIT_CODE = null ];
+            echo Missing exit code;
+            exit 1;
+          fi
+          exit $EXIT_CODE
 
     # - name: Spin up Docker cluster for integ testing
     #   working-directory: ./tmp/performance-analyzer-rca
