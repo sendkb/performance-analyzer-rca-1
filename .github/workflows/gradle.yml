@@ -107,6 +107,12 @@ jobs:
       - name: Log in to ECR
         uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
+      - name: Debug image name
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: rca-tests-testrunner
+          IMAGE_TAG: ${{ github.sha }}
+        run: echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       - name: Render task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
