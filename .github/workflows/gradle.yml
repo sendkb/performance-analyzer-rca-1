@@ -123,7 +123,7 @@ jobs:
         with:
           task-definition: ./configs/aws/task-definition.rca-it.json
           container-name: testrunner
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
       - name: Debug task definition file
         run: cat ${{ steps.render-task-definition.outputs.task-definition }}
       - name: Deploy to ECS
