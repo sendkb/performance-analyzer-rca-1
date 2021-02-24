@@ -124,6 +124,8 @@ jobs:
           task-definition: ./configs/aws/task-definition.rca-it.json
           container-name: testrunner
           image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: Debug task definition file
+        run: cat ${{ steps.render-task-definition.outputs.task-definition }}
       - name: Deploy to ECS
         id: deploy-to-ecs
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
