@@ -141,8 +141,8 @@ jobs:
           set -euxo pipefail
 
           # Run the IT task
-          echo aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }},"${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --profile cs-test-alt7-admin --region $AWS_REGION
-          TASK_ARN=$(aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }},"${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --profile cs-test-alt7-admin --region $AWS_REGION) | jq '.tasks[0].taskArn'
+          echo aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.outputs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }}","${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --region $AWS_REGION
+          TASK_ARN=$(aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.outputs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }}","${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --region $AWS_REGION) | jq '.tasks[0].taskArn'
 
           # Check the task status
           echo aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus'
