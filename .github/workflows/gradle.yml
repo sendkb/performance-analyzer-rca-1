@@ -14,6 +14,8 @@ jobs:
   build_rca_pkg:
     runs-on: [ubuntu-latest]
     name: Building RCA package
+    env:
+      AWS_REGION: us-west-2
     steps:
     - name: Set up JDK 1.12
       uses: actions/setup-java@v1
@@ -66,7 +68,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.RCA_TESTS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.RCA_TESTS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
+        aws-region: ${{ env.AWS_REGION }}
     - name: Log in to ECR
       uses: aws-actions/amazon-ecr-login@v1
       id: login-ecr
@@ -95,6 +97,8 @@ jobs:
     runs-on: [ubuntu-latest]
     name: Running RCA integration tests
     needs: build_rca_pkg
+    env:
+      AWS_REGION: us-west-2
     steps:
       - name: Checkout RCA package
         uses: actions/checkout@v2
@@ -103,7 +107,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.RCA_TESTS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.RCA_TESTS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+          aws-region: ${{ env.AWS_REGION }}
       - name: Log in to ECR
         uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
@@ -133,18 +137,19 @@ jobs:
           task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
           cluster: rca-tests-cluster
       - name: Wait for tests
-        env:
-          AWS_REGION: us-west-2
         run: |
+          # Run the IT task
+          TASK_ARN=$(aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }},"${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --profile cs-test-alt7-admin --region $AWS_REGION) | jq '.tasks[0].taskArn'
+
           # Check the task status
-          CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
+          CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus');
           echo "Current status is: $CURRENT_STATUS"
           while [ "$CURRENT_STATUS" != "STOPPED" ];
             do sleep 1m;
-            CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].lastStatus');
+            CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus');
           done;
 
-          EXIT_CODE = $(aws ecs describe-tasks --cluster rca-tests-cluster --tasks ${{ steps.deploy-to-ecs.task-definition-arn }} --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode')
+          EXIT_CODE = $(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode')
           if [ $EXIT_CODE = null ];
             echo Missing exit code;
             exit 1;

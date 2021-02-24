@@ -64,7 +64,7 @@
     }
   ],
   "placementConstraints": [],
-  "memory": "1024",
+  "memory": "2048",
   "taskRoleArn": "arn:aws:iam::356098247920:role/rca-tests-execution-role",
   "family": "rca-it",
   "pidMode": null,
