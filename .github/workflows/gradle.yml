@@ -141,20 +141,19 @@ jobs:
           set -euxo pipefail
 
           # Run the IT task
-          echo aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.outputs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }}","${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --region $AWS_REGION
           TASK_ARN=$(aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.outputs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }}","${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --region $AWS_REGION | jq '.tasks[0].taskArn')
 
           # Check the task status
-          echo aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus'
+          echo "aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus'"
           CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus');
           echo "Current status is: $CURRENT_STATUS"
           while [ "$CURRENT_STATUS" != "STOPPED" ];
             do sleep 1m;
-            echo aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus'
+            echo "aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus'"
             CURRENT_STATUS=$(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].lastStatus');
           done;
 
-          echo aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode'
+          echo "aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode'"
           EXIT_CODE = $(aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ARN --region $AWS_REGION | jq '.tasks[0].containers[0].exitCode')
           if [ $EXIT_CODE = null ];
             echo Missing exit code;
