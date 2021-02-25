@@ -144,7 +144,7 @@ jobs:
           TASK_ARN=$(aws ecs run-task --cluster rca-tests-cluster --task-definition ${{ steps.deploy-to-ecs.outputs.task-definition-arn }} --network-configuration '{"awsvpcConfiguration":{"subnets":["${{ secrets.RCA_TESTS_PUBLIC_SUBNET_1 }}","${{ secrets.RCA_TESTS_PUBLIC_SUBNET_2 }}"],"securityGroups":["${{ secrets.RCA_TESTS_SECURITY_GROUP }}"],"assignPublicIp":"ENABLED"}}' --launch-type FARGATE --region $AWS_REGION | jq '.tasks[0].taskArn')
 
           # Extract the task ID from the full ARN
-          TASK_ID=$(echo $TASK_ARN | sed -n 's/.*\/\([^/]*\)$/\1/p')
+          TASK_ID=$(echo $TASK_ARN | sed -n 's/.*\/\([^/]*\)"$/\1/p')
 
           # Check the task status
           echo "aws ecs describe-tasks --cluster rca-tests-cluster --tasks $TASK_ID --region $AWS_REGION | jq '.tasks[0].lastStatus'"
